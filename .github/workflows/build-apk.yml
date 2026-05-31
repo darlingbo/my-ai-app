@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to publish the APK to a Release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,8 +23,16 @@ jobs:
           gradle-version: '8.7'
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
-      - uses: actions/upload-artifact@v4
+
+      # Rename so the download is clearly named
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk MyAI.apk
+
+      # Publish to ONE permanent release (replaces the old APK every build)
+      - name: Publish latest APK
+        uses: softprops/action-gh-release@v2
         with:
-          name: MyAI-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          tag_name: latest
+          name: "📱 My AI — Latest App (always newest)"
+          body: "Tap MyAI.apk below to download the newest version. This always replaces the old one."
+          files: MyAI.apk
