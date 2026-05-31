@@ -41,10 +41,9 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         messages = findViewById(R.id.messages)
         scroll = findViewById(R.id.scroll)
         input = findViewById(R.id.input)
-        mode = prefs.getString("mode", "general") ?: "general"
+        mode = "business"   // this is a Business AI
 
-        // Mode chips
-        setupModeChips()
+        setupToolkit()
 
         findViewById<Button>(R.id.sendBtn).setOnClickListener { doSend() }
         input.setOnEditorActionListener { _, _, _ -> doSend(); true }
@@ -56,30 +55,43 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         findViewById<Button>(R.id.bubbleBtn).setOnClickListener { startBubble() }
 
-        // Wake the backend (free tier may be asleep) and greet
         Thread { Api.wake() }.start()
-        addAi("Hi! I'm your AI. I remember our chats and I'm always here. What can I do for you?")
+        addAi("💼 Welcome to your Business AI. I help with plans, invoices, customer replies, marketing, pricing and growth. Tap a tool above or just tell me what you need.")
         ensureMicPermission()
     }
 
-    private fun setupModeChips() {
-        val row = findViewById<LinearLayout>(R.id.modeRow)
+    // Business toolkit — one-tap actions that send guided prompts
+    private fun setupToolkit() {
+        val row = findViewById<LinearLayout>(R.id.toolkit)
         row.removeAllViews()
-        val modes = listOf("general" to "💬 General", "student" to "🎓 Student", "business" to "💼 Business")
-        modes.forEach { (key, label) ->
+        val tools = listOf(
+            "📋 Business Plan" to "Help me write a business plan. Ask me what my business is, then create a clear plan.",
+            "🧾 Invoice" to "Create a professional invoice. Ask me the customer name, items, quantities and prices, then lay it out cleanly with a total.",
+            "💬 Reply Customer" to "Help me reply to a customer professionally. Ask me what the customer said and what I want to say.",
+            "📣 Marketing Post" to "Write a catchy marketing post to promote my business. Ask me what I'm promoting.",
+            "💰 Price It" to "Help me price my product or service. Ask me about my costs and the product.",
+            "🎯 Sales Pitch" to "Write a strong sales pitch. Ask me what I'm selling and to whom.",
+            "📦 Product Desc" to "Write an attractive product description. Ask me about the product.",
+            "📊 Business Advice" to "Give me practical business advice. Ask me what challenge I'm facing."
+        )
+        tools.forEach { (label, promptText) ->
             val b = Button(this)
             b.text = label; b.textSize = 12f
-            b.setBackgroundResource(if (key == mode) R.drawable.chip_on else R.drawable.chip_off)
-            b.setTextColor(if (key == mode) Color.parseColor("#0A0E1A") else Color.parseColor("#9Fb0d0"))
-            val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            b.setBackgroundResource(R.drawable.chip_off)
+            b.setTextColor(Color.parseColor("#3BE0FF"))
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             lp.setMargins(6, 0, 6, 0); b.layoutParams = lp
-            b.setOnClickListener {
-                mode = key; prefs.edit().putString("mode", key).apply()
-                setupModeChips()
-                addAi(when(key){"student"->"🎓 Student mode on — I'll teach you step by step.";"business"->"💼 Business mode on — let's get work done.";else->"💬 General mode on."})
-            }
+            b.setOnClickListener { addUser(label); sendToAi(promptText) }
             row.addView(b)
         }
+    }
+
+    private fun sendToAi(text: String) {
+        val thinking = addAi("…")
+        Thread {
+            val reply = Api.chat(userId, text, mode)
+            runOnUiThread { (thinking.tag as? TextView)?.text = reply; speak(reply); scrollDown() }
+        }.start()
     }
 
     private fun doSend() {
@@ -160,10 +172,14 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         tv.textSize = 15.5f
         tv.setPadding(36, 26, 36, 26)
         tv.setBackgroundResource(if (user) R.drawable.bubble_user else R.drawable.bubble_ai)
-        tv.setOnLongClickListener {
-            (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
-                .setPrimaryClip(android.content.ClipData.newPlainText("m", tv.text))
-            toast("Copied 📋"); true
+        if (!user) {
+            tv.setOnLongClickListener {
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"; putExtra(Intent.EXTRA_TEXT, tv.text.toString())
+                }
+                startActivity(Intent.createChooser(share, "Share / Send"))
+                true
+            }
         }
         val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         lp.gravity = if (user) Gravity.END else Gravity.START

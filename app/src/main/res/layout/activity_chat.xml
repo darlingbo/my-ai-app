@@ -14,7 +14,7 @@
         android:padding="14dp">
         <TextView
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="🤖 My AI" android:textColor="#3BE0FF" android:textSize="20sp"
+            android:text="💼 Business AI" android:textColor="#3BE0FF" android:textSize="20sp"
             android:textStyle="bold" android:letterSpacing="0.05" />
         <Button android:id="@+id/muteBtn" android:layout_width="44dp" android:layout_height="44dp"
             android:text="🔊" android:background="@drawable/chip_off" />
@@ -23,11 +23,15 @@
             android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
     </LinearLayout>
 
-    <!-- Mode row -->
-    <LinearLayout android:id="@+id/modeRow"
+    <!-- Business toolkit -->
+    <HorizontalScrollView
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="8dp"
-        android:paddingBottom="6dp" />
+        android:scrollbars="none" android:paddingStart="8dp" android:paddingEnd="8dp"
+        android:paddingBottom="6dp">
+        <LinearLayout android:id="@+id/toolkit"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
     <!-- Messages -->
     <ScrollView android:id="@+id/scroll"
