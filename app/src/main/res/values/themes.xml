@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MyAI" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.MyAI" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">#3BE0FF</item>
+        <item name="colorOnPrimary">#06121F</item>
         <item name="android:windowBackground">#0B0F1A</item>
         <item name="android:statusBarColor">#0B0F1A</item>
+        <item name="android:navigationBarColor">#0B0F1A</item>
+        <item name="colorSurface">#0B0F1A</item>
+        <item name="colorOnSurface">#E6EEFF</item>
+        <item name="android:textColorPrimary">#E6EEFF</item>
+        <item name="android:textColorHint">#56627F</item>
     </style>
 </resources>

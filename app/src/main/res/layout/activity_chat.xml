@@ -66,7 +66,8 @@
     <!-- Input -->
     <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical">
+        android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical"
+        android:background="#0F1730">
         <EditText android:id="@+id/input"
             android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
             android:hint="Message, or 'draw a cat'…" android:textColor="#E6EEFF" android:textColorHint="#56627F"
