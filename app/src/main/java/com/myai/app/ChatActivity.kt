@@ -639,7 +639,15 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts?.language = Locale.US
-            tts?.setPitch(1.05f); tts?.setSpeechRate(1.0f)
+            tts?.setPitch(1.0f); tts?.setSpeechRate(0.96f)   // natural, not rushed
+            // Try to pick the best-quality English voice on the device
+            try {
+                val best = tts?.voices?.filter {
+                    it.locale != null && it.locale.language == "en" &&
+                    !it.isNetworkConnectionRequired && !it.features.contains("notInstalled")
+                }?.maxByOrNull { it.quality }
+                if (best != null) tts?.voice = best
+            } catch (_: Exception) {}
             ttsReady = true
             tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
                 override fun onDone(id: String?) { if (callMode) runOnUiThread { listen() } }
@@ -664,7 +672,18 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
     private fun speak(text: String) {
-        if (ttsReady && !muted) tts?.speak(text.take(600), TextToSpeech.QUEUE_FLUSH, null, "m")
+        if (ttsReady && !muted) tts?.speak(cleanForSpeech(text).take(600), TextToSpeech.QUEUE_FLUSH, null, "m")
+    }
+
+    /** Strip markdown symbols, emojis and links so the voice reads clean, natural words. */
+    private fun cleanForSpeech(t: String): String {
+        return t
+            .replace(Regex("https?://\\S+"), "link")
+            .replace(Regex("[*_`#>~|]"), "")                       // markdown symbols
+            .replace(Regex("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+"), "") // emojis (surrogate pairs)
+            .replace(Regex("[\\u2190-\\u21FF\\u2300-\\u27BF\\u2B00-\\u2BFF\\u2600-\\u26FF\\uFE0F]"), "") // arrows/symbols/dingbats
+            .replace(Regex("\\s+"), " ")
+            .trim()
     }
 
     // ── UI ──
