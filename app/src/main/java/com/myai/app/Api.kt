@@ -39,6 +39,88 @@ object Api {
         return "https://image.pollinations.ai/prompt/$enc?width=768&height=768&nologo=true&seed=${(0..99999).random()}"
     }
 
+    /** Returns the parsed JSON object from /signup or /login. */
+    fun signup(name: String, email: String, password: String, recovery: String = ""): JSONObject {
+        return try {
+            JSONObject(postJson("$BASE/signup", JSONObject().put("name", name).put("email", email).put("password", password).put("recovery", recovery)))
+        } catch (e: Exception) { JSONObject().put("ok", false).put("error", "No internet or server is waking up. Try again.") }
+    }
+
+    fun login(email: String, password: String): JSONObject {
+        return try {
+            JSONObject(postJson("$BASE/login", JSONObject().put("email", email).put("password", password)))
+        } catch (e: Exception) { JSONObject().put("ok", false).put("error", "No internet or server is waking up. Try again.") }
+    }
+
+    /** Teach the AI new knowledge. Returns true on success. */
+    fun teach(userId: String, text: String): Boolean {
+        return try {
+            val r = postJson("$BASE/teach", JSONObject().put("user_id", userId).put("text", text).put("source", "note"))
+            JSONObject(r).optBoolean("ok", false)
+        } catch (_: Exception) { false }
+    }
+
+    /** Submit a feature request (Creator Console). */
+    fun featureRequest(userId: String, name: String, request: String): Boolean {
+        return try {
+            postJson("$BASE/feature_request", JSONObject().put("user_id", userId).put("name", name).put("request", request))
+            true
+        } catch (_: Exception) { false }
+    }
+
+    /** Get the saved feature requests (returns the raw JSON array string). */
+    fun featureRequests(): String {
+        return try { get("$BASE/feature_requests") } catch (_: Exception) { "{\"requests\":[]}" }
+    }
+
+    /** Past conversation, newest last. Returns list of (role, content). */
+    fun history(userId: String): List<Pair<String, String>> {
+        return try {
+            val arr = JSONObject(get("$BASE/history?user_id=$userId")).getJSONArray("history")
+            (0 until arr.length()).map {
+                val o = arr.getJSONObject(it); o.optString("role") to o.optString("content")
+            }
+        } catch (_: Exception) { emptyList() }
+    }
+
+    /** Analyze a photo. image_b64 = base64 (no prefix). Returns reply. */
+    fun vision(userId: String, imageB64: String, question: String): String {
+        return try {
+            val r = postJson("$BASE/vision", JSONObject().put("user_id", userId).put("image_b64", imageB64).put("question", question))
+            JSONObject(r).optString("reply", "I couldn't read that image.")
+        } catch (e: Exception) { "Couldn't analyze the image (${e.message})." }
+    }
+
+    /** Reset password using recovery word. Returns the JSON result. */
+    fun resetPassword(email: String, recovery: String, newPassword: String): JSONObject {
+        return try {
+            JSONObject(postJson("$BASE/reset_password", JSONObject().put("email", email).put("recovery", recovery).put("new_password", newPassword)))
+        } catch (e: Exception) { JSONObject().put("ok", false).put("error", "No connection. Try again.") }
+    }
+
+    /** Business trial status: (allowed, daysLeft, locked). */
+    fun accessStatus(userId: String): Triple<Boolean, Int, Boolean> {
+        return try {
+            val o = JSONObject(get("$BASE/access_status?user_id=$userId"))
+            Triple(o.optBoolean("business_allowed", true), o.optInt("trial_days_left", 0), o.optBoolean("locked", false))
+        } catch (_: Exception) { Triple(true, 0, false) }
+    }
+
+    /** Start a Paystack payment. Returns (ok, url, reference). */
+    fun payStart(userId: String, email: String): Triple<Boolean, String, String> {
+        return try {
+            val o = JSONObject(postJson("$BASE/pay/start", JSONObject().put("user_id", userId).put("email", email)))
+            Triple(o.optBoolean("ok", false), o.optString("url", ""), o.optString("reference", ""))
+        } catch (_: Exception) { Triple(false, "", "") }
+    }
+
+    /** Verify a payment after the user pays. Returns true if now premium. */
+    fun payVerify(reference: String, userId: String): Boolean {
+        return try {
+            JSONObject(get("$BASE/pay/verify?reference=$reference&user_id=$userId")).optBoolean("ok", false)
+        } catch (_: Exception) { false }
+    }
+
     fun wake() { try { get("$BASE/") } catch (_: Exception) {} }
 
     private fun postJson(urlStr: String, body: JSONObject): String {
