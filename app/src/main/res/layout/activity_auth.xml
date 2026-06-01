@@ -15,7 +15,7 @@
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="🤖" android:textSize="56sp" android:layout_marginTop="24dp" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="My AI" android:textColor="#3BE0FF" android:textSize="28sp"
+            android:text="Aura" android:textColor="#3BE0FF" android:textSize="28sp"
             android:textStyle="bold" android:letterSpacing="0.1" />
         <TextView android:id="@+id/authSubtitle" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Create your account" android:textColor="#7C8AB0" android:textSize="15sp"
@@ -41,7 +41,7 @@
         <androidx.appcompat.widget.AppCompatButton android:id="@+id/authBtn"
             android:layout_width="match_parent" android:layout_height="56dp"
             android:text="Sign Up" android:textStyle="bold" android:textSize="16sp"
-            android:background="@drawable/btn_send" android:textColor="#0A0E1A" />
+            android:background="@drawable/btn_send" android:textColor="#06121F" />
 
         <TextView android:id="@+id/toggleAuth"
             android:layout_width="wrap_content" android:layout_height="wrap_content"

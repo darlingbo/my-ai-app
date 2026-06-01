@@ -17,7 +17,7 @@
             android:text="🤖" android:textSize="60sp" android:layout_marginTop="20dp" />
         <TextView
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="My AI" android:textColor="#3BE0FF" android:textSize="30sp"
+            android:text="Aura" android:textColor="#3BE0FF" android:textSize="30sp"
             android:textStyle="bold" android:letterSpacing="0.1" />
         <TextView
             android:layout_width="match_parent" android:layout_height="wrap_content"
