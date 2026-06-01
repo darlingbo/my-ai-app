@@ -661,7 +661,13 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             showProgress(); return
         }
 
-        val isImage = listOf("draw","image of","picture of","generate an image","create an image","make an image","make a picture","design an image","paint").any { low.contains(it) }
+        val isImage = listOf(
+            "draw","paint","sketch","logo","wallpaper","poster","banner","flyer","emoji",
+            "image of","picture of","photo of","drawing of","illustration of","art of",
+            "generate an image","create an image","make an image","generate a picture","make a picture",
+            "create a picture","design an image","design a logo","make a logo","create a logo","design a poster",
+            "generate image","make me an image","make me a picture","make me a logo","draw me","design me a"
+        ).any { low.contains(it) }
         if (isImage) { generateImage(cleanPrompt(t)); return }
         if (low.startsWith("remember ")) {
             val fact = t.substring(8).trim()
