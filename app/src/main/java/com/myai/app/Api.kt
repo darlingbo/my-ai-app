@@ -131,6 +131,13 @@ object Api {
         } catch (_: Exception) { false }
     }
 
+    /** Build a complete website/web-app from a description. Returns the HTML code. */
+    fun build(prompt: String): String {
+        return try {
+            JSONObject(postJson("$BASE/build", JSONObject().put("prompt", prompt))).optString("code", "")
+        } catch (_: Exception) { "" }
+    }
+
     fun wake() { try { get("$BASE/") } catch (_: Exception) {} }
 
     private fun postJson(urlStr: String, body: JSONObject): String {

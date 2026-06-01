@@ -42,6 +42,8 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity android:name=".BuildActivity" android:exported="false" />
+
         <receiver android:name=".ReminderReceiver" android:enabled="true" android:exported="false" />
 
         <service

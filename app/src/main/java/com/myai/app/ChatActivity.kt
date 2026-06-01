@@ -368,6 +368,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             )
         }
         val tools = buildList<Pair<String, String>> {
+            add("🛠️ Build Site/App" to "__BUILD__")
             add("📚 Teach AI" to "__TEACH__")
             addAll(base)
             if (isCreator) add("👑 Console" to "__CONSOLE__")
@@ -384,11 +385,43 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     "__PROGRESS__" -> showProgress()
                     "__TEACH__" -> teachDialog()
                     "__CONSOLE__" -> consoleDialog()
+                    "__BUILD__" -> buildDialog()
                     else -> { addUser(label); if (platform == "student") awardXp(); sendToAi(promptText) }
                 }
             }
             row.addView(b)
         }
+    }
+
+    // 🛠️ Build a website / web-app from a description, then show it live
+    private fun buildDialog() {
+        val box = EditText(this)
+        box.hint = "Describe the site/app… e.g. 'a portfolio site for a photographer' or 'a tip calculator'"
+        box.setLines(3); box.gravity = android.view.Gravity.TOP
+        AlertDialog.Builder(this)
+            .setTitle("🛠️ Build a Website / App")
+            .setMessage("Tell me what to build. I'll create it and show it live, ready to share.")
+            .setView(box)
+            .setPositiveButton("Build it") { _, _ ->
+                val p = box.text.toString().trim()
+                if (p.length < 3) { toast("Describe what to build first"); return@setPositiveButton }
+                if (!isOnline()) { toast("Need internet to build"); return@setPositiveButton }
+                addUser("🛠️ Build: $p")
+                val thinking = addAi("🛠️ Building your site… (10–30s)")
+                Thread {
+                    val code = Api.build(p)
+                    runOnUiThread {
+                        if (code.isNotEmpty() && code.contains("<")) {
+                            (thinking.tag as? TextView)?.text = "✅ Done! Opening live preview…"
+                            BuildActivity.html = code
+                            startActivity(Intent(this, BuildActivity::class.java))
+                        } else {
+                            (thinking.tag as? TextView)?.text = "Couldn't build it, please try again."
+                        }
+                    }
+                }.start()
+            }
+            .setNegativeButton("Cancel", null).show()
     }
 
     // 📚 Teach My AI — paste knowledge the AI will use
