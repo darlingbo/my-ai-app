@@ -1,83 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#0B0F1A">
+    android:layout_height="match_parent">
 
-    <!-- Header -->
+    <!-- ===== MAIN CHAT ===== -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="14dp">
-        <TextView android:id="@+id/title"
-            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:text="🤖 My AI" android:textColor="#3BE0FF" android:textSize="20sp"
-            android:textStyle="bold" android:letterSpacing="0.05" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/callBtn" android:layout_width="44dp" android:layout_height="44dp"
-            android:text="📞" android:background="@drawable/chip_off" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/muteBtn" android:layout_width="44dp" android:layout_height="44dp"
-            android:text="🔊" android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/bubbleBtn" android:layout_width="wrap_content" android:layout_height="44dp"
-            android:text="💬 Float" android:textSize="12sp" android:textColor="#3BE0FF"
-            android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
-    </LinearLayout>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#0B0F1A">
 
-    <!-- Platform switch (CREATOR ONLY) -->
-    <LinearLayout android:id="@+id/switcher"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:padding="8dp" android:weightSum="3"
-        android:visibility="gone">
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/studentBtn"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
-            android:text="🎓" android:background="@drawable/chip_off" android:textColor="#9Fb0d0"
-            android:layout_marginEnd="3dp" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/businessBtn"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
-            android:text="💼" android:background="@drawable/chip_off" android:textColor="#9Fb0d0"
-            android:layout_marginStart="3dp" android:layout_marginEnd="3dp" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/dailyBtn"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
-            android:text="🌟" android:background="@drawable/chip_off" android:textColor="#9Fb0d0"
-            android:layout_marginStart="3dp" />
-    </LinearLayout>
-
-    <!-- Toolkit (changes with platform) -->
-    <HorizontalScrollView
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:scrollbars="none" android:paddingStart="8dp" android:paddingEnd="8dp"
-        android:paddingBottom="6dp">
-        <LinearLayout android:id="@+id/toolkit"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <!-- Messages -->
-    <ScrollView android:id="@+id/scroll"
-        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
-        android:padding="8dp">
-        <LinearLayout android:id="@+id/messages"
+        <!-- Header -->
+        <LinearLayout
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="10dp">
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/menuBtn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:text="☰" android:textSize="20sp" android:background="@drawable/chip_off" android:textColor="#3BE0FF" />
+            <TextView android:id="@+id/title"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="🤖 My AI" android:textColor="#3BE0FF" android:textSize="19sp"
+                android:textStyle="bold" android:paddingStart="10dp" android:paddingEnd="0dp" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/callBtn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:text="📞" android:background="@drawable/chip_off" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/muteBtn"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:text="🔊" android:background="@drawable/chip_off" android:layout_marginStart="5dp" />
+        </LinearLayout>
 
-    <!-- Input -->
-    <LinearLayout
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical"
-        android:background="#0F1730">
-        <EditText android:id="@+id/input"
-            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:hint="Message, or 'draw a cat'…" android:textColor="#E6EEFF" android:textColorHint="#56627F"
-            android:backgroundTint="#3BE0FF" android:maxLines="4" android:inputType="textCapSentences|textMultiLine" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/photoBtn" android:layout_width="48dp" android:layout_height="48dp"
-            android:text="📷" android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/micBtn" android:layout_width="48dp" android:layout_height="48dp"
-            android:text="🎤" android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/sendBtn" android:layout_width="wrap_content" android:layout_height="48dp"
-            android:text="➤" android:textSize="18sp" android:background="@drawable/btn_send"
-            android:textColor="#0A0E1A" android:layout_marginStart="6dp" />
+        <!-- Platform switch (creator only) -->
+        <LinearLayout android:id="@+id/switcher"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:padding="8dp" android:weightSum="3"
+            android:visibility="gone">
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/studentBtn"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
+                android:text="🎓" android:background="@drawable/chip_off" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/businessBtn"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
+                android:text="💼" android:background="@drawable/chip_off" android:layout_marginStart="3dp" android:layout_marginEnd="3dp" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/dailyBtn"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="44dp"
+                android:text="🌟" android:background="@drawable/chip_off" android:layout_marginStart="3dp" />
+        </LinearLayout>
+
+        <!-- Toolkit -->
+        <HorizontalScrollView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:scrollbars="none" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingBottom="6dp">
+            <LinearLayout android:id="@+id/toolkit"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- Messages -->
+        <ScrollView android:id="@+id/scroll"
+            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:padding="8dp">
+            <LinearLayout android:id="@+id/messages"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        </ScrollView>
+
+        <!-- Input -->
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:padding="10dp" android:gravity="center_vertical"
+            android:background="#0F1730">
+            <EditText android:id="@+id/input"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:hint="Message, or 'draw a cat'…" android:textColor="#E6EEFF" android:textColorHint="#56627F"
+                android:backgroundTint="#3BE0FF" android:maxLines="4" android:inputType="textCapSentences|textMultiLine" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/photoBtn"
+                android:layout_width="48dp" android:layout_height="48dp"
+                android:text="📷" android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/micBtn"
+                android:layout_width="48dp" android:layout_height="48dp"
+                android:text="🎤" android:background="@drawable/chip_off" android:layout_marginStart="6dp" />
+            <androidx.appcompat.widget.AppCompatButton android:id="@+id/sendBtn"
+                android:layout_width="wrap_content" android:layout_height="48dp"
+                android:text="➤" android:textSize="18sp" android:background="@drawable/btn_send"
+                android:textColor="#06121F" android:layout_marginStart="6dp" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+    <!-- ===== SIDEBAR (drawer) ===== -->
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#0F1730"
+        android:padding="14dp"
+        android:fitsSystemWindows="true">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="🤖 My AI" android:textColor="#3BE0FF" android:textSize="22sp"
+            android:textStyle="bold" android:paddingTop="16dp" android:paddingBottom="14dp" />
+
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/newChatBtn"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:text="＋  New Chat" android:textStyle="bold"
+            android:background="@drawable/btn_send" android:textColor="#06121F" />
+
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/floatDrawerBtn"
+            android:layout_width="match_parent" android:layout_height="46dp"
+            android:text="💬  Floating Bubble" android:background="@drawable/chip_off"
+            android:textColor="#3BE0FF" android:layout_marginTop="8dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="RECENT CHATS" android:textColor="#56627F" android:textSize="12sp"
+            android:letterSpacing="0.1" android:paddingTop="18dp" android:paddingBottom="6dp" />
+
+        <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <LinearLayout android:id="@+id/convList"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        </ScrollView>
+
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/logoutBtn"
+            android:layout_width="match_parent" android:layout_height="44dp"
+            android:text="Log out" android:background="@drawable/chip_off" android:textColor="#7C8AB0" />
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

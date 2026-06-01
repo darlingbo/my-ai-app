@@ -15,16 +15,26 @@ import java.net.URLEncoder
 object Api {
     const val BASE = "https://my-ai-backend-itf0.onrender.com"
 
-    /** Send a chat message. Returns the AI reply (or an error string). */
-    fun chat(userId: String, message: String, mode: String): String {
+    /** Send a chat message in a specific conversation. Returns the AI reply. */
+    fun chat(userId: String, message: String, mode: String, convId: String = "default"): String {
         return try {
             val body = JSONObject()
-                .put("user_id", userId).put("message", message).put("mode", mode)
+                .put("user_id", userId).put("message", message).put("mode", mode).put("conv_id", convId)
             val res = postJson("$BASE/chat", body)
             JSONObject(res).optString("reply", "…")
         } catch (e: Exception) {
             "I couldn't reach the server. Check your internet and try again.\n(${e.message})"
         }
+    }
+
+    /** List the user's past conversations: (conv_id, title), newest first. */
+    fun conversations(userId: String): List<Pair<String, String>> {
+        return try {
+            val arr = JSONObject(get("$BASE/conversations?user_id=$userId")).getJSONArray("conversations")
+            (0 until arr.length()).map {
+                val o = arr.getJSONObject(it); o.optString("conv_id") to o.optString("title")
+            }
+        } catch (_: Exception) { emptyList() }
     }
 
     /** Save a fact to long-term memory. */
@@ -73,10 +83,10 @@ object Api {
         return try { get("$BASE/feature_requests") } catch (_: Exception) { "{\"requests\":[]}" }
     }
 
-    /** Past conversation, newest last. Returns list of (role, content). */
-    fun history(userId: String): List<Pair<String, String>> {
+    /** Messages of one conversation, oldest first. Returns list of (role, content). */
+    fun history(userId: String, convId: String = "default"): List<Pair<String, String>> {
         return try {
-            val arr = JSONObject(get("$BASE/history?user_id=$userId")).getJSONArray("history")
+            val arr = JSONObject(get("$BASE/history?user_id=$userId&conv_id=$convId")).getJSONArray("history")
             (0 until arr.length()).map {
                 val o = arr.getJSONObject(it); o.optString("role") to o.optString("content")
             }

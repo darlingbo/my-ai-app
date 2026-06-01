@@ -37,6 +37,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var mode = "general"
     private var platform = "daily"
     private var isCreator = false
+    private var convId = "default"
     private val userId by lazy { prefs.getString("user_id", "guest") ?: "guest" }
 
     // image picker for photo analysis
@@ -79,17 +80,72 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             (it as Button).text = if (muted) "🔇" else "🔊"
             if (muted) tts?.stop()
         }
-        findViewById<Button>(R.id.bubbleBtn).setOnClickListener { toggleBubble() }
-        findViewById<Button>(R.id.bubbleBtn).text = if (prefs.getBoolean("bubble_on", false)) "💬 Off" else "💬 Float"
         findViewById<Button>(R.id.callBtn).setOnClickListener { toggleCall() }
         findViewById<Button>(R.id.photoBtn).setOnClickListener { pickImage.launch("image/*") }
-        findViewById<TextView>(R.id.title).setOnLongClickListener { logoutDialog(); true }
 
-        applyPlatform(greet = false)   // set up toolkit/title, no greeting yet
-        loadHistoryThenGreet()
-        Thread { Api.wake() }.start()
+        // Sidebar (ChatGPT-style)
+        val drawer = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer)
+        findViewById<Button>(R.id.menuBtn).setOnClickListener {
+            loadConversations(); drawer.openDrawer(androidx.core.view.GravityCompat.START)
+        }
+        findViewById<Button>(R.id.newChatBtn).setOnClickListener {
+            drawer.closeDrawers(); startNewChat()
+        }
+        findViewById<Button>(R.id.floatDrawerBtn).setOnClickListener { drawer.closeDrawers(); toggleBubble() }
+        findViewById<Button>(R.id.logoutBtn).setOnClickListener { logoutDialog() }
+
+        applyPlatform(greet = false)
+        startNewChat()                 // always opens a fresh page
+        Thread { Api.wake(); val c = Api.conversations(userId); runOnUiThread { renderConversations(c) } }.start()
         ensureMicPermission()
         scheduleDailyCheckin()
+    }
+
+    // Start a brand-new conversation (fresh page)
+    private fun startNewChat() {
+        convId = "c_" + System.currentTimeMillis()
+        messages.removeAllViews()
+        greetForPlatform()
+        checkBusinessTrial()
+    }
+
+    private fun loadConversations() {
+        Thread { val c = Api.conversations(userId); runOnUiThread { renderConversations(c) } }.start()
+    }
+
+    private fun renderConversations(list: List<Pair<String, String>>) {
+        val box = findViewById<LinearLayout>(R.id.convList)
+        box.removeAllViews()
+        if (list.isEmpty()) {
+            val tv = TextView(this); tv.text = "No past chats yet."; tv.setTextColor(Color.parseColor("#56627F"))
+            tv.setPadding(8, 8, 8, 8); box.addView(tv); return
+        }
+        list.forEach { (cid, title) ->
+            val b = Button(this)
+            b.text = "💬  " + (if (title.isBlank()) "Chat" else title)
+            b.textSize = 13f; b.isAllCaps = false
+            b.setBackgroundResource(R.drawable.chip_off)
+            b.setTextColor(Color.parseColor("#E6EEFF"))
+            b.gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, 4, 0, 4); b.layoutParams = lp
+            b.setOnClickListener { openConversation(cid) }
+            box.addView(b)
+        }
+    }
+
+    private fun openConversation(cid: String) {
+        convId = cid
+        findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawer).closeDrawers()
+        messages.removeAllViews()
+        val loading = addAi("⏳ Loading…")
+        Thread {
+            val past = Api.history(userId, cid)
+            runOnUiThread {
+                messages.removeView(loading)
+                past.forEach { (role, content) -> bubble(content, role == "user") }
+            }
+        }.start()
     }
 
     // F: the AI reaches out to you every day
@@ -476,7 +532,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (!isOnline()) { addAi(OfflineBrain.reply(text)); return }
         val thinking = addAi("🤔 Thinking…")
         Thread {
-            val reply = Api.chat(userId, text, mode)
+            val reply = Api.chat(userId, text, mode, convId)
             runOnUiThread { (thinking.tag as? TextView)?.text = reply; speak(reply); scrollDown() }
         }.start()
     }
@@ -543,7 +599,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (!isOnline()) { addAi(OfflineBrain.reply(t)); return }
         val thinking = addAi("🤔 Thinking… (first reply can take ~30s if the AI was asleep)")
         Thread {
-            val reply = Api.chat(userId, t, mode)
+            val reply = Api.chat(userId, t, mode, convId)
             runOnUiThread { (thinking.tag as? TextView)?.text = reply; speak(reply); scrollDown() }
         }.start()
     }
@@ -573,7 +629,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     // ── Image credits (earn by watching 5 ads) ──
-    private fun imgCredits() = prefs.getInt("img_credits", 2)  // 2 free to start
+    private fun imgCredits() = prefs.getInt("img_credits", 5)  // 5 free to start
     private fun setImgCredits(n: Int) = prefs.edit().putInt("img_credits", n).apply()
 
     private fun withImageCredit(action: () -> Unit) {
@@ -601,14 +657,37 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun doGenerateImage(prompt: String) {
-        val loading = addAi("🎨 Creating: $prompt …")
+        if (!isOnline()) { addAi("📴 I need internet to create images."); return }
+        val loading = addAi("🎨 Creating: $prompt … (can take 10–30s)")
         Thread {
-            try {
-                val url = Api.imageUrl(prompt)
-                val bmp = BitmapFactory.decodeStream(URL(url).openStream())
-                runOnUiThread { (loading.tag as? TextView)?.text = "🎨 $prompt"; if (bmp != null) addImage(bmp); scrollDown() }
-            } catch (e: Exception) {
-                runOnUiThread { (loading.tag as? TextView)?.text = "Couldn't create image: ${e.message}" }
+            val url = Api.imageUrl(prompt)
+            var bmp: android.graphics.Bitmap? = null
+            // try a couple of times — Pollinations can be slow to generate the first time
+            for (attempt in 1..2) {
+                try {
+                    val conn = (URL(url).openConnection() as java.net.HttpURLConnection)
+                    conn.connectTimeout = 30000; conn.readTimeout = 90000
+                    conn.setRequestProperty("User-Agent", "MyAI-App")
+                    conn.instanceFollowRedirects = true
+                    val bytes = conn.inputStream.use { it.readBytes() }
+                    bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (bmp != null) break
+                } catch (_: Exception) {}
+            }
+            val finalBmp = bmp
+            runOnUiThread {
+                if (finalBmp != null) {
+                    (loading.tag as? TextView)?.text = "🎨 $prompt"
+                    addImage(finalBmp)
+                } else {
+                    // fallback: give a tappable link so they still get the image
+                    (loading.tag as? TextView)?.text = "🎨 $prompt"
+                    val link = addAi("Tap to open your image 👉 $url")
+                    (link.tag as? TextView)?.setOnClickListener {
+                        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (_: Exception) {}
+                    }
+                }
+                scrollDown()
             }
         }.start()
     }
@@ -727,7 +806,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (prefs.getBoolean("bubble_on", false)) {
             stopService(Intent(this, BubbleService::class.java))
             prefs.edit().putBoolean("bubble_on", false).apply()
-            findViewById<Button>(R.id.bubbleBtn).text = "💬 Float"
+            findViewById<Button>(R.id.floatDrawerBtn).text = "💬  Floating Bubble"
             toast("Floating bubble turned OFF")
         } else {
             startBubble()
@@ -742,7 +821,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
         ContextCompat.startForegroundService(this, Intent(this, BubbleService::class.java))
         prefs.edit().putBoolean("bubble_on", true).apply()
-        findViewById<Button>(R.id.bubbleBtn).text = "💬 Off"
+        findViewById<Button>(R.id.floatDrawerBtn).text = "💬  Bubble: ON (tap to stop)"
         toast("Bubble ON! Tap it anytime to chat 💬")
         moveTaskToBack(true)
     }
