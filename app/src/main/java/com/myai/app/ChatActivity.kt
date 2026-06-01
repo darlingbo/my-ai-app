@@ -69,8 +69,9 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         findViewById<Button>(R.id.businessBtn).setOnClickListener { switchPlatform("business") }
         findViewById<Button>(R.id.dailyBtn).setOnClickListener { switchPlatform("daily") }
 
-        // Creator sees the platform switcher; normal users are locked to their choice
-        findViewById<LinearLayout>(R.id.switcher).visibility = if (isCreator) View.VISIBLE else View.GONE
+        // No buttons — everything happens by just talking to the AI
+        findViewById<LinearLayout>(R.id.switcher).visibility = View.GONE
+        findViewById<LinearLayout>(R.id.toolkit).visibility = View.GONE
 
         findViewById<Button>(R.id.sendBtn).setOnClickListener { doSend() }
         input.setOnEditorActionListener { _, _, _ -> doSend(); true }
@@ -254,9 +255,9 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun greetForPlatform() {
         addAi(when (platform) {
-            "student" -> "🎓✨ Hey study buddy! Learning here is FUN — earn ⭐XP, level up, build 🔥streaks! Play brain games, solve riddles, or tap any tool. Let's gooo! 🚀"
-            "business" -> "💼 Welcome to your Business AI. Plans, invoices, customer replies, marketing, pricing — tap a tool or tell me what you need."
-            else -> "🌟 Hi! I'm your everyday AI helper. Ask me anything, tap a tool, or send a 📷 photo. How can I help?"
+            "student" -> "🎓 Hey! Just tell me what you need — \"explain photosynthesis\", \"quiz me on history\", \"help with my maths\", \"write my essay\". Let's learn! 🚀"
+            "business" -> "💼 Hi! Just tell me what you need — \"make me an invoice\", \"write a marketing post\", \"reply to a customer\", \"build me a website\". Let's grow your business."
+            else -> "🌟 Hi! Just talk to me — ask anything, say \"draw a sunset\", \"build me a website\", \"remind me at 5pm\", or send a 📷 photo. How can I help?"
         })
     }
 
@@ -308,16 +309,14 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         hi(findViewById(R.id.businessBtn), platform == "business")
         hi(findViewById(R.id.dailyBtn), platform == "daily")
         setupToolkit(platform)
-        if (greet) {
-            addAi(when (platform) {
-                "student" -> "🎓✨ Hey study buddy! Learning here is FUN — earn ⭐XP, level up, and build study 🔥streaks! Play brain games, solve riddles, get fun facts, or tap any tool to learn. Let's gooo! 🚀 (Tap 🏆 My Progress to see your level!)"
-                "business" -> "💼 Business mode! I help with plans, invoices, customer replies, marketing, pricing and growth. Tap a tool or tell me what you need."
-                else -> "🌟 Daily mode! I'm your everyday helper — reminders, advice, ideas, answers, anything you need day to day. How can I help?"
-            })
-        }
+        if (greet) greetForPlatform()
     }
 
     private fun setupToolkit(platform: String) {
+        // Buttons removed — features are triggered by talking to the AI. Keep empty/hidden.
+        findViewById<LinearLayout>(R.id.toolkit).removeAllViews()
+        return
+        @Suppress("UNREACHABLE_CODE")
         val row = findViewById<LinearLayout>(R.id.toolkit)
         row.removeAllViews()
         val base = when (platform) {
@@ -422,6 +421,24 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }.start()
             }
             .setNegativeButton("Cancel", null).show()
+    }
+
+    // Build a site/app straight from what the user typed
+    private fun buildSite(prompt: String) {
+        if (!isOnline()) { addAi("📴 I need internet to build that."); return }
+        val thinking = addAi("🛠️ Building it for you… (10–30s)")
+        Thread {
+            val code = Api.build(prompt)
+            runOnUiThread {
+                if (code.isNotEmpty() && code.contains("<")) {
+                    (thinking.tag as? TextView)?.text = "✅ Done! Opening your live preview — tap ⤴ Share to keep it."
+                    BuildActivity.html = code
+                    startActivity(Intent(this, BuildActivity::class.java))
+                } else {
+                    (thinking.tag as? TextView)?.text = "Hmm, that didn't work. Try describing it again."
+                }
+            }
+        }.start()
     }
 
     // 📚 Teach My AI — paste knowledge the AI will use
@@ -621,6 +638,29 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         addUser(t)
         if (platform == "student") awardXp()
         val low = t.lowercase()
+
+        // "switch to business/student/daily" — change mode by talking
+        if ((low.contains("switch to") || low.contains("change to") || low.startsWith("go to")) &&
+            (low.contains("business") || low.contains("student") || low.contains("daily") || low.contains("general"))) {
+            when {
+                low.contains("business") -> switchPlatform("business")
+                low.contains("student") -> switchPlatform("student")
+                else -> switchPlatform("daily")
+            }
+            return
+        }
+
+        // "build me a website / app" — build it and show a live preview
+        val wantsBuild = listOf("build me a website","build a website","build me a site","build a site",
+            "build me an app","build an app","make me a website","make a website","create a website",
+            "design a website","build a web app","make me an app","make me a web app","create an app").any { low.contains(it) }
+        if (wantsBuild) { buildSite(t); return }
+
+        // Student: "my progress / my level / my xp"
+        if (platform == "student" && (low.contains("my progress") || low.contains("my level") || low.contains("my xp") || low.contains("my streak"))) {
+            showProgress(); return
+        }
+
         val isImage = listOf("draw","image of","picture of","generate an image","create an image","make an image","make a picture","design an image","paint").any { low.contains(it) }
         if (isImage) { generateImage(cleanPrompt(t)); return }
         if (low.startsWith("remember ")) {
