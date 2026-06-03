@@ -14,6 +14,19 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    // Permanent signing key: keeps every update installable over the last one
+    // (so users stay logged in and never lose chats). Used only if the file exists.
+    signingConfigs {
+        getByName("debug") {
+            val ks = file("aura.keystore")
+            if (ks.exists()) {
+                storeFile = ks
+                storePassword = "aura2026"
+                keyAlias = "aura"
+                keyPassword = "aura2026"
+            }
+        }
+    }
     buildTypes { release { isMinifyEnabled = false } }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

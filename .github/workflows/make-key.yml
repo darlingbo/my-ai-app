@@ -1,0 +1,39 @@
+name: Make Permanent Key
+
+# Run ONCE. Generates app/aura.keystore and commits it so every future
+# build is signed identically -> updates install over the old app and
+# users keep their login and chats.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keygen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Generate keystore if missing
+        run: |
+          if [ -f app/aura.keystore ]; then
+            echo "Keystore already exists. Nothing to do."
+            exit 0
+          fi
+          keytool -genkeypair -v \
+            -keystore app/aura.keystore \
+            -storepass aura2026 -keypass aura2026 \
+            -alias aura -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Aura, OU=Aura, O=Aura, L=Accra, S=Greater Accra, C=GH"
+          echo "Keystore created."
+      - name: Commit keystore
+        run: |
+          git config user.name "darlingbo"
+          git config user.email "stephenowusuansah601@gmail.com"
+          git add -f app/aura.keystore
+          git commit -m "Add permanent signing key" || echo "Nothing to commit"
+          git push
